@@ -4,7 +4,7 @@
 #include <FastLED.h>
 #include <LiquidCrystal_I2C.h>
 
-#define NUM_LEDS               72 // LED pixels in the strip (Amount of LEDs is x3)
+#define NUM_LEDS               27 // LED pixels in the strip
 
 #define CLOCK_PIN               2 // Data pin for the LED strip | GREY
 #define DATA_PIN                3 // Data pin for the LED strip | PRPL
@@ -106,7 +106,7 @@ void ButtonClickHandler() {
     bool waitTimeDecreased = false;
     while (!digitalRead(DEC_WAIT_BUTTON_PIN)) {
       Serial.println(F("Button not released!"));
-      if (waitTime > 1000) {
+      if (waitTime > 250) {
         waitTime -= 250;
         Serial.print(F("Changed waitTime to "));
         Serial.println(waitTime);
@@ -116,7 +116,7 @@ void ButtonClickHandler() {
       delay(400);
     }
     delay(100);
-    if (waitTime > 1000 && !waitTimeDecreased) {
+    if (waitTime > 250 && !waitTimeDecreased) {
       waitTime -= 250;
       Serial.print(F("Changed waitTime to "));
       Serial.println(waitTime);
@@ -154,93 +154,74 @@ void TakePictures(int pressedButtonPin) {
   delay(100);
   UpdateDisplayInfo();
   
-  // Every if statement does a loop through all pixels connected. 'incr' is used in case something needs change in the future
-  // Requirement is that in 1 loop cicle 3 pixels shine in red, green and blue in order to create white light
-  // So to say - 3 pixels make 1 pixel
+  // Every if statement does a loop through all pixels connected.
+  // 1 color channel of each pixel is used per loop cicle
   if (pressedButtonPin == INIT_FAST_BUTTON_PIN) { // Fast looping
-    int incr = 9; // The amount i increases with each cicle of the following loop
-
-    // In fast mode 9 pixels (3r, 3g, 3b) in total are turned on in a cicle
-    for (int i = 0; i < NUM_LEDS; i += incr) {
-      if (i > (incr - 1)) {
-        for (int j = i - 1; j > i - (incr + 1); j--) // Turn off the last 3 pixels
-          leds[j] = CRGB::Black;
-        FastLED.show();
-      }
-      for (int j = i; j < i + incr; j++) {
-        if (j % 3 == 0)
-          leds[j] = CRGB::Red;
-        else if (j % 3 == 1)
-          leds[j] = CRGB::Green;
+    for (int i = 0; i < NUM_LEDS; i += 3) {
+      if (i > 2) // Turn off the last pixel
+        leds[i - 3] = CRGB::Black;
+      for (int j = 0; j < 3; j++) { // In fast mode totally 27 channels are shown
+        if (j == 0)
+          leds[i] = CRGB::Red;
+        else if (j == 1)
+          leds[i] = CRGB::Green;
         else
-          leds[j] = CRGB::Blue;
+          leds[i] = CRGB::Blue;
+        FastLED.show();
+        digitalWrite(CAMERA_PIN, HIGH);
+        CheckStopClick(pressedButtonPin);
+        if (stopEarly) {
+          stopEarly = false;
+          break;
+        }
+        digitalWrite(CAMERA_PIN, LOW);
       }
-      FastLED.show();
-      digitalWrite(CAMERA_PIN, HIGH);
-      CheckStopClick(pressedButtonPin);
-      if (stopEarly) {
-        stopEarly = false;
-        break;
-      }
-      digitalWrite(CAMERA_PIN, LOW);
     }
   }
 
   else if (pressedButtonPin == INIT_MEDIUM_BUTTON_PIN) { // Medium speed looping
-    int incr = 6; // The amount i increases with each cicle of the following loop
-    
-    // In fast mode 6 pixels (2r, 2g, 2b) in total are turned on in a cicle
-    for (int i = 0; i < NUM_LEDS; i += incr) {
-      if (i > (incr - 1)) {
-        for (int j = i - 1; j > i - (incr + 1); j--) // Turn off the last 2 pixels
-          leds[j] = CRGB::Black;
-        FastLED.show();
-      }
-      for (int j = i; j < i + incr; j++) {
-        if (j % 3 == 0)
-          leds[j] = CRGB::Red;
-        else if (j % 3 == 1)
-          leds[j] = CRGB::Green;
+    for (int i = 0; i < NUM_LEDS; i += 2) {
+      if (i > 1) // Turn off the last pixel
+        leds[i - 2] = CRGB::Black;
+      for (int j = 0; j < 3; j++) { // In fast mode totally 39 channels are shown
+        if (j == 0)
+          leds[i] = CRGB::Red;
+        else if (j == 1)
+          leds[i] = CRGB::Green;
         else
-          leds[j] = CRGB::Blue;
+          leds[i] = CRGB::Blue;
+        FastLED.show();
+        digitalWrite(CAMERA_PIN, HIGH);
+        CheckStopClick(pressedButtonPin);
+        if (stopEarly) {
+          stopEarly = false;
+          break;
+        }
+        digitalWrite(CAMERA_PIN, LOW);
       }
-      FastLED.show();
-      digitalWrite(CAMERA_PIN, HIGH);
-      CheckStopClick(pressedButtonPin);
-      if (stopEarly) {
-        stopEarly = false;
-        break;
-      }
-      digitalWrite(CAMERA_PIN, LOW);
     }
   }
 
   else { // Slow speed looping
-    int incr = 3; // The amount i increases with each cicle of the following loop
-
-    // In fast mode 3 pixels (1r, 1g, 1b) in total are turned on in a cicle
-    for (int i = 0; i < NUM_LEDS; i += incr) {
-      if (i > (incr - 1)) {
-        for (int j = i - 1; j > i - (incr + 1); j--) // Turn off the last pixel
-          leds[j] = CRGB::Black;
-        FastLED.show();
-      }
-      for (int j = i; j < i + incr; j++) {
-        if (j % 3 == 0)
-          leds[j] = CRGB::Red;
-        else if (j % 3 == 1)
-          leds[j] = CRGB::Green;
+    for (int i = 0; i < NUM_LEDS; i++) {
+      if (i > 0) // Turn off the last pixel
+        leds[i - 1] = CRGB::Black;
+      for (int j = 0; j < 3; j++) { // In fast mode totally 81 channels are shown
+        if (j == 0)
+          leds[i] = CRGB::Red;
+        else if (j == 1)
+          leds[i] = CRGB::Green;
         else
-          leds[j] = CRGB::Blue;
+          leds[i] = CRGB::Blue;
+        FastLED.show();
+        digitalWrite(CAMERA_PIN, HIGH);
+        CheckStopClick(pressedButtonPin);
+        if (stopEarly) {
+          stopEarly = false;
+          break;
+        }
+        digitalWrite(CAMERA_PIN, LOW);
       }
-      FastLED.show();
-      digitalWrite(CAMERA_PIN, HIGH);
-      CheckStopClick(pressedButtonPin);
-      if (stopEarly) {
-        stopEarly = false;
-        break;
-      }
-      digitalWrite(CAMERA_PIN, LOW);
     }
   }
   strncpy(currentFlashMode, flashMode.Idle, sizeof(currentFlashMode));
@@ -257,7 +238,7 @@ void TurnLEDs_OFF() {
 }
 
 // -------------------------------------------- Updates the information on the LCD -------------------------------------------- //
-void UpdateDisplayInfo() {
+void UpdateDisplayInfo(bool toBlink) {
   lcd.clear();
   lcd.setCursor(1, 0);
   lcd.printstr("Delay");
