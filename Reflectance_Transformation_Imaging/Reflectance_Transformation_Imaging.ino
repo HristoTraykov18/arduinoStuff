@@ -5,6 +5,7 @@
 #include <LiquidCrystal_I2C.h>
 
 #define NUM_LEDS               27 // LED pixels in the strip
+#define COUNTER_OFF            -1 // Does not show current pixel number on the display
 
 #define CLOCK_PIN               2 // Data pin for the LED strip | GREY
 #define DATA_PIN                3 // Data pin for the LED strip | PRPL
@@ -48,7 +49,7 @@ void setup() {
   FastLED.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS); // WS2801 needs data and clock pins
   TurnLEDs_OFF();
   RTI_Screen();
-  UpdateDisplayInfo();
+  UpdateDisplayInfo(COUNTER_OFF);
 }
 
 void loop() {
@@ -89,7 +90,7 @@ void ButtonClickHandler() {
         Serial.print(F("Changed waitTime to "));
         Serial.println(waitTime);
         waitTimeIncreased = true;
-        UpdateDisplayInfo();
+        UpdateDisplayInfo(COUNTER_OFF);
       }
       delay(400);
     }
@@ -98,7 +99,7 @@ void ButtonClickHandler() {
       waitTime += 250;
       Serial.print(F("Changed waitTime to "));
       Serial.println(waitTime);
-      UpdateDisplayInfo();
+      UpdateDisplayInfo(COUNTER_OFF);
     }
   }
   
@@ -111,7 +112,7 @@ void ButtonClickHandler() {
         Serial.print(F("Changed waitTime to "));
         Serial.println(waitTime);
         waitTimeDecreased = true;
-        UpdateDisplayInfo();
+        UpdateDisplayInfo(COUNTER_OFF);
       }
       delay(400);
     }
@@ -120,7 +121,7 @@ void ButtonClickHandler() {
       waitTime -= 250;
       Serial.print(F("Changed waitTime to "));
       Serial.println(waitTime);
-      UpdateDisplayInfo();
+      UpdateDisplayInfo(COUNTER_OFF);
     }
   }
 }
@@ -130,8 +131,13 @@ void CheckStopClick(int pressedButtonPin) { //
   unsigned long startMillis = millis();
   while (millis() - startMillis <= waitTime) {
     if (!digitalRead(pressedButtonPin)) {
+      while (!digitalRead(pressedButtonPin)) {
+        Serial.println(F("Button not released!"));
+        delay(400);
+      }
       Serial.println(F("Stop early"));
       stopEarly = true;
+      delay(100);
       break;
     }
   }
@@ -152,14 +158,16 @@ void TakePictures(int pressedButtonPin) {
     delay(250);
   }
   delay(100);
-  UpdateDisplayInfo();
-  
+
   // Every if statement does a loop through all pixels connected.
   // 1 color channel of each pixel is used per loop cicle
+  int initIncr, incr; // Increment value used in the loops and to output current pixel in the LCD
   if (pressedButtonPin == INIT_FAST_BUTTON_PIN) { // Fast looping
-    for (int i = 0; i < NUM_LEDS; i += 3) {
+    initIncr = 3;
+    incr = initIncr;
+    for (int i = 0; i < NUM_LEDS && !stopEarly; i += initIncr) {
       if (i > 2) // Turn off the last pixel
-        leds[i - 3] = CRGB::Black;
+        leds[i - initIncr] = CRGB::Black;
       for (int j = 0; j < 3; j++) { // In fast mode totally 27 channels are shown
         if (j == 0)
           leds[i] = CRGB::Red;
@@ -168,21 +176,23 @@ void TakePictures(int pressedButtonPin) {
         else
           leds[i] = CRGB::Blue;
         FastLED.show();
+        UpdateDisplayInfo(incr);
+        incr += initIncr;
         digitalWrite(CAMERA_PIN, HIGH);
         CheckStopClick(pressedButtonPin);
-        if (stopEarly) {
-          stopEarly = false;
+        if (stopEarly)
           break;
-        }
         digitalWrite(CAMERA_PIN, LOW);
       }
     }
   }
 
   else if (pressedButtonPin == INIT_MEDIUM_BUTTON_PIN) { // Medium speed looping
-    for (int i = 0; i < NUM_LEDS; i += 2) {
+    initIncr = 2;
+    incr = initIncr;
+    for (int i = 0; i < NUM_LEDS && !stopEarly; i += initIncr) {
       if (i > 1) // Turn off the last pixel
-        leds[i - 2] = CRGB::Black;
+        leds[i - initIncr] = CRGB::Black;
       for (int j = 0; j < 3; j++) { // In fast mode totally 39 channels are shown
         if (j == 0)
           leds[i] = CRGB::Red;
@@ -191,21 +201,23 @@ void TakePictures(int pressedButtonPin) {
         else
           leds[i] = CRGB::Blue;
         FastLED.show();
+        UpdateDisplayInfo(incr);
+        incr += initIncr;
         digitalWrite(CAMERA_PIN, HIGH);
         CheckStopClick(pressedButtonPin);
-        if (stopEarly) {
-          stopEarly = false;
+        if (stopEarly)
           break;
-        }
         digitalWrite(CAMERA_PIN, LOW);
       }
     }
   }
 
   else { // Slow speed looping
-    for (int i = 0; i < NUM_LEDS; i++) {
+    initIncr = 1;
+    incr = initIncr;
+    for (int i = 0; i < NUM_LEDS && !stopEarly; i += initIncr) {
       if (i > 0) // Turn off the last pixel
-        leds[i - 1] = CRGB::Black;
+        leds[i - initIncr] = CRGB::Black;
       for (int j = 0; j < 3; j++) { // In fast mode totally 81 channels are shown
         if (j == 0)
           leds[i] = CRGB::Red;
@@ -214,18 +226,20 @@ void TakePictures(int pressedButtonPin) {
         else
           leds[i] = CRGB::Blue;
         FastLED.show();
+        UpdateDisplayInfo(incr);
+        incr += initIncr;
         digitalWrite(CAMERA_PIN, HIGH);
         CheckStopClick(pressedButtonPin);
-        if (stopEarly) {
-          stopEarly = false;
+        if (stopEarly)
           break;
-        }
         digitalWrite(CAMERA_PIN, LOW);
       }
     }
   }
+  
   strncpy(currentFlashMode, flashMode.Idle, sizeof(currentFlashMode));
-  UpdateDisplayInfo();
+  UpdateDisplayInfo(COUNTER_OFF);
+  stopEarly = false;
 }
 
 // ------------------------------------------- Makes sure all pixels are turned off ------------------------------------------- //
@@ -238,12 +252,20 @@ void TurnLEDs_OFF() {
 }
 
 // -------------------------------------------- Updates the information on the LCD -------------------------------------------- //
-void UpdateDisplayInfo(bool toBlink) {
+void UpdateDisplayInfo(int currentPixel) {
   lcd.clear();
   lcd.setCursor(1, 0);
   lcd.printstr("Delay");
+  char waitTimeStr[20], tempArr[20], currentPixelStr[20];
+  if (currentPixel != COUNTER_OFF) {
+    lcd.setCursor(7, 0);
+    lcd.printstr("ID");
+    lcd.setCursor(7, 1);
+    sprintf(tempArr, "%u", currentPixel);
+    strncpy(currentPixelStr, tempArr, sizeof(tempArr));
+    lcd.printstr(currentPixelStr);
+  }
   lcd.setCursor(0, 1);
-  char waitTimeStr[20], tempArr[20];
   sprintf(tempArr, "%u", waitTime / 1000);
   strncpy(waitTimeStr, tempArr, sizeof(tempArr));
   strncat(waitTimeStr, ".", sizeof("."));

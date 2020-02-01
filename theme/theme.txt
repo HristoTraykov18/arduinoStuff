@@ -108,8 +108,8 @@ editor.literal2.style = #3F9CD6,bold
 editor.variable.style = #3F9CD6,bold
 editor.reserved_word_2.style = #3F9CD6,bold
 editor.literal_boolean.style = #3F9CD6,plain
-editor.literal_char.style = #C92B08,plain
-editor.literal_string_double_quote.style = #C92B08,plain
+editor.literal_char.style = #ff1a1a,plain
+editor.literal_string_double_quote.style = #ff1a1a,plain
 editor.preprocessor.style = #06d806,bold
 
 # http://www.arduino.cc/
