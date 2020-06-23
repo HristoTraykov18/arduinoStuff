@@ -11,7 +11,6 @@
 #define motorPin3  D3 // IN3 on the ULN2003 driver
 #define motorPin4  D4 // IN4 on the ULN2003 driver
 
-
 // ----------------------------------------- Constants and variables ----------------------------------------- //
 const char * PROGMEM HOST = "esp8266_Update";
 const char * PROGMEM UPDATE_PATH = "/sourceControl";
@@ -25,7 +24,7 @@ WiFiUDP udp;
 ESP8266WebServer server(80);
 ESP8266WebServer updateServer(1394);
 ESP8266HTTPUpdateServer httpUpdater;
-AccelStepper stepperMotor(AccelStepper::HALF4WIRE , motorPin1, motorPin3, motorPin2, motorPin4);
+AccelStepper stepperMotor(AccelStepper::HALF4WIRE , motorPin1, motorPin3, motorPin2, motorPin4); // Mind the order of the pins
 
 void setup() {
   Serial.begin(115200);

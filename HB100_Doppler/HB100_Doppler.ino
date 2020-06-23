@@ -19,7 +19,7 @@
 //*****************************************/
 
 #include "AnalogFrequency.h"
-#include "TM1637.h"
+#include <TM1637Display.h>
 
 uint32_t displayTimer = 0;
 uint32_t amplitude = 0, samples = 0;

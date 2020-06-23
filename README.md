@@ -1,2 +1,2 @@
 # arduinoStuff
-Arduino projects and tests
+Arduino tests and libraries (mostly backup stuff)
