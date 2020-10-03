@@ -6,6 +6,8 @@
 
 #define NUM_LEDS               27 // LED pixels in the strip
 #define COUNTER_OFF            -1 // Does not show current pixel number on the display
+#define HIGH_INPUT_DELAY      125
+#define HIGH_INPUT_DURATION   125
 
 #define CLOCK_PIN               2 // Data pin for the LED strip | GREY
 #define DATA_PIN                3 // Data pin for the LED strip | PRPL
@@ -45,6 +47,8 @@ void setup() {
   pinMode(INC_WAIT_BUTTON_PIN, INPUT_PULLUP);
   pinMode(DEC_WAIT_BUTTON_PIN, INPUT_PULLUP);
   pinMode(CAMERA_PIN, OUTPUT);  // Set camera pin as output
+  digitalWrite(CAMERA_PIN, HIGH);
+  //digitalWrite(CAMERA_PIN, LOW);
   //FastLED.addLeds<WS2811, DATA_PIN, BRG>(leds, NUM_LEDS); // WS2811 needs only data pin
   FastLED.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS); // WS2801 needs data and clock pins
   TurnLEDs_OFF();
@@ -136,6 +140,7 @@ void CheckStopClick(int pressedButtonPin) { //
         delay(400);
       }
       Serial.println(F("Stop early"));
+      digitalWrite(CAMERA_PIN, HIGH);
       stopEarly = true;
       delay(100);
       break;
@@ -178,11 +183,17 @@ void TakePictures(int pressedButtonPin) {
         FastLED.show();
         UpdateDisplayInfo(incr);
         incr += initIncr;
-        digitalWrite(CAMERA_PIN, HIGH);
+        delay(HIGH_INPUT_DELAY);
+        
+        unsigned long startMillis = millis();
+
+        while (millis() - startMillis < HIGH_INPUT_DURATION)
+          digitalWrite(CAMERA_PIN, LOW);
+          
         CheckStopClick(pressedButtonPin);
         if (stopEarly)
           break;
-        digitalWrite(CAMERA_PIN, LOW);
+        digitalWrite(CAMERA_PIN, HIGH);
       }
     }
   }
@@ -203,11 +214,16 @@ void TakePictures(int pressedButtonPin) {
         FastLED.show();
         UpdateDisplayInfo(incr);
         incr += initIncr;
-        digitalWrite(CAMERA_PIN, HIGH);
+        delay(HIGH_INPUT_DELAY);
+        
+        unsigned long startMillis = millis();
+        while (millis() - startMillis < HIGH_INPUT_DURATION)
+          digitalWrite(CAMERA_PIN, LOW);
+          
         CheckStopClick(pressedButtonPin);
         if (stopEarly)
           break;
-        digitalWrite(CAMERA_PIN, LOW);
+        digitalWrite(CAMERA_PIN, HIGH);
       }
     }
   }
@@ -228,11 +244,17 @@ void TakePictures(int pressedButtonPin) {
         FastLED.show();
         UpdateDisplayInfo(incr);
         incr += initIncr;
-        digitalWrite(CAMERA_PIN, HIGH);
+        delay(HIGH_INPUT_DELAY);
+        
+        unsigned long startMillis = millis();
+
+        while (millis() - startMillis < HIGH_INPUT_DURATION)
+          digitalWrite(CAMERA_PIN, LOW);
+          
         CheckStopClick(pressedButtonPin);
         if (stopEarly)
           break;
-        digitalWrite(CAMERA_PIN, LOW);
+        digitalWrite(CAMERA_PIN, HIGH);
       }
     }
   }
